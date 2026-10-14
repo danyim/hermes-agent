@@ -2145,7 +2145,9 @@ jobs:
           if release['tagName'] != tag or release['isDraft']:
               raise ValueError('Previous package must come from a published release')
           commit = subprocess.check_output(['git', 'rev-parse', '--verify', f'refs/tags/{tag}^{{commit}}'], text=True).strip()
-          subprocess.run(['git', 'merge-base', '--is-ancestor', commit, 'origin/main'], check=True)
+          held = subprocess.check_output(['git', 'for-each-ref', '--contains', commit, '--format=%(refname)', 'refs/remotes/origin/main', 'refs/remotes/origin/release/*'], text=True)
+          if not held.strip():
+              raise ValueError('Previous package must come from main or a release/* branch')
           fetch(tag, commit, ['termux'], Path('termux-build/previous'), ['deb/*.deb'])
           PY
 
